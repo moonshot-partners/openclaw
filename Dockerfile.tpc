@@ -14,19 +14,25 @@
 ARG BASE_IMAGE=openclaw:local
 FROM ${BASE_IMAGE}
 
-# Switch to root for global installs
+# Switch to root for global installs and system deps
 USER root
 
-# Install agent-browser globally
-RUN npm install -g agent-browser@latest
+# Install agent-browser and playwright globally
+RUN npm install -g agent-browser@latest playwright
 
-# Install Playwright Chromium with system dependencies
+# Install Chromium with system dependencies
 # --with-deps installs required system libraries (libglib, libnss, etc.)
 RUN npx playwright install --with-deps chromium
+
+# Make global node_modules accessible to node user
+RUN chmod -R a+r /usr/local/lib/node_modules
 
 # Switch back to node user (matches base image)
 USER node
 
+# Set NODE_PATH so node user can find globally installed modules
+ENV NODE_PATH=/usr/local/lib/node_modules
+
 # Verify installations
 RUN agent-browser --version && \
-    node -e "const {chromium} = require('playwright'); console.log('playwright: ok')"
+    node -e "require('playwright'); console.log('playwright: ok')"
