@@ -18,7 +18,7 @@ env:
 
 jobs:
   build-base:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
@@ -28,9 +28,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up QEMU (for ARM64 cross-compilation)
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -56,7 +53,7 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ env.BASE_IMAGE }}:${{ steps.version.outputs.tag }}
@@ -65,7 +62,7 @@ jobs:
           cache-to: type=gha,scope=base,mode=max
 
   build-tpc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs: build-base
     permissions:
       contents: read
@@ -74,9 +71,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up QEMU (for ARM64 cross-compilation)
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -93,7 +87,7 @@ jobs:
         with:
           context: .
           file: Dockerfile.tpc
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}:${{ needs.build-base.outputs.tag }}
           push: ${{ github.event_name == 'push' || inputs.push }}
@@ -108,4 +102,4 @@ jobs:
           echo "### Built images" >> "$GITHUB_STEP_SUMMARY"
           echo "- Base: \`${{ env.BASE_IMAGE }}:${{ needs.build-base.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- TPC:  \`${{ env.TPC_IMAGE }}:${{ needs.build-base.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Platforms: linux/amd64, linux/arm64" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Platform: linux/arm64 (native)" >> "$GITHUB_STEP_SUMMARY"
